@@ -1,8 +1,8 @@
-from flask import Flask
+from flask import Flask, request
 import json
 
-app = Flask(__name__)
 
+app = Flask(__name__)
 
 class Produkt:
     def __init__(self, id, name, amount):
@@ -11,45 +11,48 @@ class Produkt:
         self.amount = amount
 
     def __str__(self):
-        return self.name+"("+self.amount+" mal)"
+        return self.name+"("+str(self.amount)+" mal)"
+    def __repr__(self):
+        return self.__str__()
 
 
-warenkorb = dict()
+warenkorb = {"username":{"1":Produkt("1","Toilettenpapier",3)}}
 
 
 @app.route('/warenkorb/<string:uid>', methods=['GET'])
 def get_warenkorb_of_user(uid):
     if(warenkorb.get(uid, None) != None):
-        return ",".join(map(str, warenkorb[uid]))
+        return ",".join(map(str,warenkorb[uid].values()))
     else:
         return "Invalid uid"
 
 
 @app.route('/add/<string:uid>', methods=['POST'])
 def add_to_warenkorb_of_user(uid):
-    if(warenkorb.get(uid, None) != None):
-        warenkorb[uid] = []
+    if(warenkorb.get(uid, None) == None):
+        warenkorb[uid] = dict()
     products = json.loads(request.form["json_of_produts"])
-    # [{"id": "1","name": "Toilettenpapier", "amount": "2020"}]
+    # [{"id": "1","name": "Toilettenpapier", "amount": 2020}]
     for produkt_dict in products:
-        warenkorb[uid].append(
-            Produkt(produkt_dict["id"],
-                    produkt_dict["name"],
-                    produkt_dict["amount"])
-        )
-    return "success. new cart:" + ",".join(map(str, warenkorb[uid]))
+        if warenkorb[uid].get(produkt_dict["id"], None) == None:
+            warenkorb[uid][produkt_dict["id"]] = Produkt(produkt_dict["id"],
+                                                         produkt_dict["name"],
+                                                         produkt_dict["amount"])
+        else:
+            warenkorb[uid][produkt_dict["id"]].amount += produkt_dict["amount"]
+
+    return "success."
+
 
 @app.route('/substract/<string:uid>', methods=['POST'])
 def remove_from_warenkorb_of_user(uid):
-    if(warenkorb.get(uid, None) != None):
+    if(warenkorb.get(uid, None) == None):
         return "Invalid uid"
     products = json.loads(request.form["json_of_produts"])
-    # [{"id": "1","name": "Toilettenpapier", "amount": "2020"}]
+    # [{"id": "1","name": "Toilettenpapier", "amount": 2020}]
     for produkt_dict in products:
-        for content in warenkorb[uid]:
-            if produkt_dict["id"] == content.id:
-                content.amount = min(content.amount-produkt_dict["amount"],0)                    
-
+        warenkorb[uid][produkt_dict["id"]].amount -= produkt_dict["amount"]
+    return "success."
 
 if __name__ == '__main__':
     app.run()
