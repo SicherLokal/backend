@@ -31,7 +31,7 @@ def get_warenkorb_of_user(uid):
 def add_to_warenkorb_of_user(uid):
     if(warenkorb.get(uid, None) == None):
         warenkorb[uid] = dict()
-    products = json.loads(request.form["json_of_produts"])
+    products = json.loads(request.form["json_of_products"])
     # [{"id": "1","name": "Toilettenpapier", "amount": 2020}]
     for produkt_dict in products:
         if warenkorb[uid].get(produkt_dict["id"], None) == None:
@@ -48,7 +48,7 @@ def add_to_warenkorb_of_user(uid):
 def remove_from_warenkorb_of_user(uid):
     if(warenkorb.get(uid, None) == None):
         return "Invalid uid"
-    products = json.loads(request.form["json_of_produts"])
+    products = json.loads(request.form["json_of_products"])
     # [{"id": "1","name": "Toilettenpapier", "amount": 2020}]
     for produkt_dict in products:
         warenkorb[uid][produkt_dict["id"]].amount -= produkt_dict["amount"]
