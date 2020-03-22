@@ -1,8 +1,12 @@
-from flask import Flask, request, make_response
+# Rudimentary backend.
+# manages shopping carts, and notifies shop owners about purchases.
+
+from flask import Flask
 import json
 from datetime import timedelta
 from flask import make_response, request, current_app
 from functools import update_wrapper
+
 
 def crossdomain(origin=None, methods=None, headers=None, max_age=21600,
                 attach_to_all=True, automatic_options=True):
@@ -59,6 +63,7 @@ def crossdomain(origin=None, methods=None, headers=None, max_age=21600,
 
 app = Flask(__name__)
 
+
 class Produkt:
     def __init__(self, id, name, amount):
         self.id = id
@@ -67,11 +72,18 @@ class Produkt:
 
     def __str__(self):
         return self.name+"("+str(self.amount)+" mal)"
+
     def __repr__(self):
         return self.__str__()
 
 
-warenkorb = {"username":{"1":Produkt("1","Toilettenpapier",3)}}
+# Will be exchanged for a database later.
+warenkorb = {"username": {"1": Produkt("1", "Toilettenpapier", 3)}}
+
+
+############
+#  ROUTES  #
+############
 
 
 @app.route('/warenkorb/<string:uid>', methods=['GET'])
@@ -80,7 +92,7 @@ def get_warenkorb_of_user(uid):
     resp = app.make_default_options_response()
     resp.headers["Access-Control-Allow-Origin"] = "*"
     if(warenkorb.get(uid, None) != None):
-        return ",".join(map(str,warenkorb[uid].values()))
+        return ",".join(map(str, warenkorb[uid].values()))
     else:
         return "Invalid uid"
 
@@ -113,6 +125,17 @@ def remove_from_warenkorb_of_user(uid):
     for produkt_dict in products:
         warenkorb[uid][produkt_dict["id"]].amount -= produkt_dict["amount"]
     return "success."
+
+
+@app.route('/send', methods=['POST'])
+@crossdomain(origin='*')
+def sendToSupermarket():
+    market_id = request.form["market_id"]
+    uid = request.form["uid"]
+    # check_if_payment_was_processed(uid)
+    # write_email(market_id, warenkorb[uid])
+    return "success."
+
 
 if __name__ == '__main__':
     app.run()
